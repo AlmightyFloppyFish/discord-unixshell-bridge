@@ -99,7 +99,7 @@ fn act(dg: &Discord, m: Message, command: Command, shell_session: Arc<Mutex<Shel
         Command::Shell(command, tty_num) => {
             let com = bash::new("sh")
                 .arg("-c")
-                .arg(command)
+                .arg(command.clone())
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap()
@@ -117,6 +117,14 @@ fn act(dg: &Discord, m: Message, command: Command, shell_session: Arc<Mutex<Shel
                     sh.write_to(tty_num, &line.unwrap(), m.channel_id);
                     sh.display(tty_num);
                 });
+                let mut sh = shell_session.lock().unwrap();
+                sh.write_to(
+                    tty_num,
+                    &format!(" -:- Command \"{}\" exited -:- ", command),
+                    m.channel_id,
+                );
+                sh.display(tty_num);
+                drop(sh);
             });
         }
         Command::Invalid(text) => {
